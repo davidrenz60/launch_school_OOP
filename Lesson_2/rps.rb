@@ -40,7 +40,6 @@ class Player
   def initialize
     @score = 0
     @move = nil
-    @winner = nil
     set_name
   end
 end
