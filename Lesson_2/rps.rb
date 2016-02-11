@@ -1,5 +1,3 @@
-#making a change
-
 class Move
   VALUES = ['rock', 'paper', 'scissors'].freeze
 
@@ -42,6 +40,7 @@ class Player
   def initialize
     @score = 0
     @move = nil
+    @winner = nil
     set_name
   end
 end
@@ -82,7 +81,8 @@ end
 
 # game orchestration engine
 class RPSGame
-  WINNING_SCORE = 10
+  WINNING_SCORE = 2
+  
   attr_accessor :human, :computer
 
   def initialize
@@ -106,49 +106,43 @@ class RPSGame
 
   def declare_winner
     if human.move > computer.move
-      :human
+      human.name
     elsif human.move < computer.move
-      :computer
-    end
-  end
-
-  def display_winner
-    if declare_winner == :human
-      puts "#{human.name} wins!"
-    elsif declare_winner == :computer
-      puts "#{computer.name} wins!"
-    else
-      puts "It's a tie"
+      computer.name
     end
   end
 
   def update_score
-    if declare_winner == :human
+    if declare_winner == human.name
       human.score += 1
-    elsif declare_winner == :computer
+    elsif declare_winner == computer.name
       computer.score += 1
     end
-  end
-
-  def display_score
-    puts "The score is #{human.name}: #{human.score}, #{computer.name}: #{computer.score}"
   end
 
   def overall_winner?
     [human.score, computer.score].include?(WINNING_SCORE)
   end
 
-  def display_overall_winner
-    if human.score == WINNING_SCORE
-      puts "#{human.name} has #{WINNING_SCORE} points and wins the game!"
-    elsif computer.score == WINNING_SCORE
-      puts "#{computer.name} has #{WINNING_SCORE} points and wins the game!"
-    end
-  end
-
   def reset_score
     human.score = 0
     computer.score = 0
+  end
+
+  def display_winner
+    if declare_winner
+      puts "#{declare_winner} wins!"
+    else
+      puts "It's a tie."
+    end
+  end
+
+  def display_overall_winner
+    puts "#{declare_winner} scores #{WINNING_SCORE} points and wins the game!"
+  end
+
+  def display_score
+    puts "The score is #{human.name}: #{human.score}, #{computer.name}: #{computer.score}"
   end
 
   def play_again?
