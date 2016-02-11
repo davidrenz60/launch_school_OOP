@@ -81,7 +81,7 @@ end
 
 # game orchestration engine
 class RPSGame
-  WINNING_SCORE = 2
+  WINNING_SCORE = 10
   
   attr_accessor :human, :computer
 
@@ -130,15 +130,11 @@ class RPSGame
   end
 
   def display_winner
-    if declare_winner
-      puts "#{declare_winner} wins!"
-    else
-      puts "It's a tie."
-    end
+    puts declare_winner ?  "#{declare_winner} wins!" :  "It's a tie."
   end
 
   def display_overall_winner
-    puts "#{declare_winner} scores #{WINNING_SCORE} points and wins the game!"
+    puts "#{declare_winner} has #{WINNING_SCORE} points and wins the game!"
   end
 
   def display_score
