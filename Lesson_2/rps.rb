@@ -1,3 +1,5 @@
+require 'pry'
+
 class Move
   VALUES = %w(r p s l sp).freeze
 
@@ -79,11 +81,12 @@ class Spock < Move
 end
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_accessor :move, :name, :score, :history
 
   def initialize
     @score = 0
     @move = nil
+    @history = []
     set_name
   end
 
@@ -107,6 +110,7 @@ class Human < Player
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice"
     end
+
     self.move = convert_to_class(choice)
   end
 
@@ -191,6 +195,16 @@ class RPSGame
     puts "The score is #{human.name}: #{human.score}, #{computer.name}: #{computer.score}"
   end
 
+  def update_history
+    human.history << human.move.value
+    computer.history << computer.move.value
+  end
+
+  def display_history
+    puts "#{human.name}'s past moves: #{human.history}"
+    puts "#{computer.name}'s past moves: #{computer.history}"
+  end
+
   def play_again?
     answer = nil
     loop do
@@ -203,16 +217,22 @@ class RPSGame
     answer == 'y'
   end
 
+  def main_game
+    human.choose
+    computer.choose
+    display_moves
+    display_winner
+    update_score
+    display_score
+    update_history
+    display_history
+  end
+
   def play
     display_opening_message
 
     loop do
-      human.choose
-      computer.choose
-      display_moves
-      display_winner
-      update_score
-      display_score
+      main_game
       if overall_winner?
         display_overall_winner
         reset_score
