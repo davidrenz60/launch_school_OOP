@@ -2,7 +2,7 @@ class Move
   VALUES = %w(r p s l sp).freeze
 
   attr_reader :value
-  
+
   def scissors?
     @value == 'scissors'
   end
@@ -39,7 +39,7 @@ class Rock < Move
 end
 
 class Paper < Move
-    def initialize
+  def initialize
     @value = 'paper'
   end
 
@@ -85,7 +85,17 @@ class Player
     @score = 0
     @move = nil
     set_name
-  end 
+  end
+
+  def convert_to_class(choice)
+    case choice
+    when 'r' then Rock.new
+    when 'p' then Paper.new
+    when 's' then Scissors.new
+    when 'l' then Lizard.new
+    when 'sp' then Spock.new
+    end
+  end
 end
 
 class Human < Player
@@ -111,17 +121,7 @@ class Human < Player
     self.name = n
   end
 end
-  
-  def convert_to_class(choice)
-    case choice
-    when 'r' then Rock.new
-    when 'p' then Paper.new
-    when 's' then Scissors.new
-    when 'l' then Lizard.new
-    when 'sp' then Spock.new
-    end
-  end
-          
+
 class Computer < Player
   def choose
     self.move = convert_to_class(Move::VALUES.sample)
@@ -182,7 +182,6 @@ class RPSGame
   def display_winner
     puts declare_winner ? "#{declare_winner} wins!" : "It's a tie."
   end
-
 
   def display_overall_winner
     puts "#{declare_winner} has #{WINNING_SCORE} points and wins the game!"
