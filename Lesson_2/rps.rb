@@ -1,10 +1,8 @@
 class Move
-  VALUES = ['rock', 'paper', 'scissors'].freeze
+  VALUES = %w(r p s l sp).freeze
 
-  def initialize(value)
-    @value = value
-  end
-
+  attr_reader :value
+  
   def scissors?
     @value == 'scissors'
   end
@@ -17,20 +15,66 @@ class Move
     @value == 'paper'
   end
 
-  def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (paper? && other_move.rock?) ||
-      (scissors? && other_move.paper?)
+  def lizard?
+    @value == 'lizard'
   end
 
-  def <(other_move)
-    (rock? && other_move.paper?) ||
-      (paper? && other_move.scissors?) ||
-      (scissors? && other_move.rock?)
+  def spock?
+    @value == 'spock'
   end
 
   def to_s
     @value
+  end
+end
+
+class Rock < Move
+  def initialize
+    @value = 'rock'
+  end
+
+  def >(other_move)
+    other_move.scissors? || other_move.lizard?
+  end
+end
+
+class Paper < Move
+    def initialize
+    @value = 'paper'
+  end
+
+  def >(other_move)
+    other_move.rock? || other_move.spock?
+  end
+end
+
+class Scissors < Move
+  def initialize
+    @value = 'scissors'
+  end
+
+  def >(other_move)
+    other_move.paper? || other_move.lizard?
+  end
+end
+
+class Lizard < Move
+  def initialize
+    @value = 'lizard'
+  end
+
+  def >(other_move)
+    other_move.paper? || other_move.spock?
+  end
+end
+
+class Spock < Move
+  def initialize
+    @value = 'spock'
+  end
+
+  def >(other_move)
+    other_move.scissors? || other_move.rock?
   end
 end
 
@@ -41,19 +85,19 @@ class Player
     @score = 0
     @move = nil
     set_name
-  end
+  end 
 end
 
 class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose rock, paper, or scissors"
-      choice = gets.chomp
+      puts "Please choose (r)ock, (p)aper, (s)cissors, (l)izard, or (sp)ock"
+      choice = gets.chomp.downcase
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice"
     end
-    self.move = Move.new(choice)
+    self.move = convert_to_class(choice)
   end
 
   def set_name
@@ -67,10 +111,20 @@ class Human < Player
     self.name = n
   end
 end
-
+  
+  def convert_to_class(choice)
+    case choice
+    when 'r' then Rock.new
+    when 'p' then Paper.new
+    when 's' then Scissors.new
+    when 'l' then Lizard.new
+    when 'sp' then Spock.new
+    end
+  end
+          
 class Computer < Player
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    self.move = convert_to_class(Move::VALUES.sample)
   end
 
   def set_name
@@ -80,8 +134,8 @@ end
 
 # game orchestration engine
 class RPSGame
-  WINNING_SCORE = 10
-  
+  WINNING_SCORE = 2
+
   attr_accessor :human, :computer
 
   def initialize
@@ -90,12 +144,12 @@ class RPSGame
   end
 
   def display_opening_message
-    puts "Welcome to Rock, Paper, Scissors, #{human.name}!"
+    puts "Welcome to Rock, Paper, Scissors, Lizard, Spock #{human.name}!"
     puts "First player to #{WINNING_SCORE} points wins."
   end
 
   def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors!"
+    puts "Thanks for playing. Goodbye!"
   end
 
   def display_moves
@@ -106,17 +160,14 @@ class RPSGame
   def declare_winner
     if human.move > computer.move
       human.name
-    elsif human.move < computer.move
+    elsif computer.move > human.move
       computer.name
     end
   end
 
   def update_score
-    if declare_winner == human.name
-      human.score += 1
-    elsif declare_winner == computer.name
-      computer.score += 1
-    end
+    human.score += 1 if declare_winner == human.name
+    computer.score += 1 if declare_winner == computer.name
   end
 
   def overall_winner?
@@ -129,8 +180,9 @@ class RPSGame
   end
 
   def display_winner
-    puts declare_winner ?  "#{declare_winner} wins!" :  "It's a tie."
+    puts declare_winner ? "#{declare_winner} wins!" : "It's a tie."
   end
+
 
   def display_overall_winner
     puts "#{declare_winner} has #{WINNING_SCORE} points and wins the game!"
