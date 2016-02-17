@@ -128,20 +128,20 @@ class Number5 < Computer
   end
 
   def find_repeat_move(history)
-    last_moves = history.map { |move| move[0] }.last(3)
-    history.count > 2 && last_moves.uniq.count == 1 ? last_moves.last : nil
+    recent_moves = history.map { |move| move[0] }.last(3)
+    history.count > 2 && recent_moves.uniq.count == 1 ? recent_moves.last : nil
   end
 end
 
 # Sonny will adjust choices based on losing with rock more than 60% of time
 class Sonny < Computer
   def sonny_choice
-    case rand(101)
-    when (1..4) then 'r'
-    when (5..28) then 'p'
-    when (29..52) then 's'
-    when (53..76) then 'l'
-    when (77..100) then 'sp'
+    case rand(100)
+    when (0..3) then 'r'
+    when (4..27) then 'p'
+    when (28..51) then 's'
+    when (52..75) then 'l'
+    when (76..99) then 'sp'
     end
   end
 
@@ -158,7 +158,7 @@ class Sonny < Computer
     losses = history.count(['rock', 'loss'])
     loss_percentage = losses.to_f / moves.to_f
 
-    moves > 4 && loss_percentage > 0.6 ? true : false
+    moves > 4 && loss_percentage > 0.6
   end
 end
 
@@ -172,11 +172,11 @@ end
 # Hal has custom choice percentages, never chooses paper.
 class Hal < Computer
   def choose
-    self.move = case rand(101)
-                when (1..50) then Scissors.new
-                when (51..60) then Rock.new
-                when (61..80) then Lizard.new
-                when (81..100) then Spock.new
+    self.move = case rand(100)
+                when (0..49) then Scissors.new
+                when (50..59) then Rock.new
+                when (60..79) then Lizard.new
+                when (80..99) then Spock.new
                 end
   end
 end
@@ -227,7 +227,7 @@ class RPSGame
   end
 
   def display_opening_message
-    system 'clear'
+    system 'clear' or system 'cls'
     puts "Welcome to Rock, Paper, Scissors, Lizard, Spock!"
     puts "First player to #{WINNING_SCORE} points wins."
   end
@@ -250,8 +250,7 @@ class RPSGame
   end
 
   def update_score
-    human.score += 1 if declare_winner == human.name
-    computer.score += 1 if declare_winner == computer.name
+    ObjectSpace.each_object(Player) {|player| player.score += 1 if player.name == declare_winner }
   end
 
   def overall_winner?
