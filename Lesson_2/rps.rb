@@ -1,9 +1,11 @@
-require 'pry'
-
 class Move
   VALUES = %w(r p s l sp).freeze
 
-  attr_reader :value
+  attr_accessor :value
+
+  def initialize
+    @value = self.class.to_s.downcase
+  end
 
   def scissors?
     @value == 'scissors'
@@ -31,50 +33,30 @@ class Move
 end
 
 class Rock < Move
-  def initialize
-    @value = 'rock'
-  end
-
   def >(other_move)
     other_move.scissors? || other_move.lizard?
   end
 end
 
 class Paper < Move
-  def initialize
-    @value = 'paper'
-  end
-
   def >(other_move)
     other_move.rock? || other_move.spock?
   end
 end
 
 class Scissors < Move
-  def initialize
-    @value = 'scissors'
-  end
-
   def >(other_move)
     other_move.paper? || other_move.lizard?
   end
 end
 
 class Lizard < Move
-  def initialize
-    @value = 'lizard'
-  end
-
   def >(other_move)
     other_move.paper? || other_move.spock?
   end
 end
 
 class Spock < Move
-  def initialize
-    @value = 'spock'
-  end
-
   def >(other_move)
     other_move.scissors? || other_move.rock?
   end
@@ -90,8 +72,8 @@ class Player
     set_name
   end
 
-  def convert_to_class(choice)
-    case choice
+  def convert_to_class(letter)
+    case letter
     when 'r' then Rock.new
     when 'p' then Paper.new
     when 's' then Scissors.new
@@ -127,28 +109,126 @@ class Human < Player
 end
 
 class Computer < Player
-  def choose
-    self.move = convert_to_class(Move::VALUES.sample)
+  def set_name
+    self.name = self.class.to_s
+  end
+end
+
+# Number5 will check if player picks same 3x in a row. Picks winner against that move
+class Number5 < Computer
+  def choose(history)
+    self.move = case find_repeat_move(history)
+                when 'rock' then Spock.new
+                when 'paper' then Lizard.new
+                when 'scissors' then Rock.new
+                when 'lizard' then Scissors.new
+                when 'spock' then Paper.new
+                else convert_to_class(Move::VALUES.sample)
+                end
   end
 
-  def set_name
-    self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
+  def find_repeat_move(history)
+    last_moves = history.map { |move| move[0] }.last(3)
+    history.count > 2 && last_moves.uniq.count == 1 ? last_moves.last : nil
+  end
+end
+
+# Sonny will adjust choices based on losing with rock more than 60% of time
+class Sonny < Computer
+  def sonny_choice
+    case rand(101)
+    when (1..4) then 'r'
+    when (5..28) then 'p'
+    when (29..52) then 's'
+    when (53..76) then 'l'
+    when (77..100) then 'sp'
+    end
+  end
+
+  def choose
+    self.move = if rock_losses?
+                  convert_to_class(sonny_choice)
+                else
+                  convert_to_class(Move::VALUES.sample)
+                end
+  end
+
+  def rock_losses?
+    moves = history.map { |move| move[0] }.count('rock')
+    losses = history.count(['rock', 'loss'])
+    loss_percentage = losses.to_f / moves.to_f
+
+    moves > 4 && loss_percentage > 0.6 ? true : false
+  end
+end
+
+# R2D2 only chooses rock
+class R2D2 < Computer
+  def choose
+    self.move = Rock.new
+  end
+end
+
+# Hal has custom choice percentages, never chooses paper.
+class Hal < Computer
+  def choose
+    self.move = case rand(101)
+                when (1..50) then Scissors.new
+                when (51..60) then Rock.new
+                when (61..80) then Lizard.new
+                when (81..100) then Spock.new
+                end
+  end
+end
+
+# Chappie has default random choice
+class Chappie < Computer
+  def choose
+    self.move = convert_to_class(Move::VALUES.sample)
   end
 end
 
 # game orchestration engine
 class RPSGame
-  WINNING_SCORE = 2
-
+  WINNING_SCORE = 10
   attr_accessor :human, :computer
 
   def initialize
+    display_opening_message
     @human = Human.new
-    @computer = Computer.new
+    @computer = convert_to_class(choose_opponent)
+  end
+
+  def choose_opponent
+    number = nil
+    loop do
+      puts "Choose your opponent:"
+      puts "(1) R2D2, (2) Hal, (3) Number5, (4) Sonny, (5) Chappie"
+      number = gets.chomp.to_i
+      break if [1, 2, 3, 4, 5].include?(number)
+      puts "Please choose a valid number"
+    end
+    number
+  end
+
+  def convert_to_class(number)
+    case number
+    when 1 then R2D2.new
+    when 2 then Hal.new
+    when 3 then Number5.new
+    when 4 then Sonny.new
+    when 5 then Chappie.new
+    end
+  end
+
+  def choose_moves(history)
+    human.choose
+    computer.class == Number5 ? computer.choose(history) : computer.choose
   end
 
   def display_opening_message
-    puts "Welcome to Rock, Paper, Scissors, Lizard, Spock #{human.name}!"
+    system 'clear'
+    puts "Welcome to Rock, Paper, Scissors, Lizard, Spock!"
     puts "First player to #{WINNING_SCORE} points wins."
   end
 
@@ -188,7 +268,7 @@ class RPSGame
   end
 
   def display_overall_winner
-    puts "#{declare_winner} has #{WINNING_SCORE} points and wins the game!"
+    puts "***#{declare_winner} has #{WINNING_SCORE} points and wins the game!***"
   end
 
   def display_score
@@ -196,13 +276,24 @@ class RPSGame
   end
 
   def update_history
-    human.history << human.move.value
-    computer.history << computer.move.value
+    case declare_winner
+    when human.name
+      human.history << [human.move.value, 'win']
+      computer.history << [computer.move.value, 'loss']
+    when computer.name
+      human.history << [human.move.value, 'loss']
+      computer.history << [computer.move.value, 'win']
+    else
+      human.history << [human.move.value, 'tie']
+      computer.history << [computer.move.value, 'tie']
+    end
   end
 
   def display_history
-    puts "#{human.name}'s past moves: #{human.history}"
-    puts "#{computer.name}'s past moves: #{computer.history}"
+    human_moves = human.history.last(3).reverse
+    computer_moves = computer.history.last(3).reverse
+    puts "#{human.name}'s recent moves: #{human_moves}"
+    puts "#{computer.name}'s recent moves: #{computer_moves}"
   end
 
   def play_again?
@@ -218,19 +309,16 @@ class RPSGame
   end
 
   def main_game
-    human.choose
-    computer.choose
+    display_history
+    choose_moves(human.history)
     display_moves
     display_winner
     update_score
     display_score
     update_history
-    display_history
   end
 
   def play
-    display_opening_message
-
     loop do
       main_game
       if overall_winner?
