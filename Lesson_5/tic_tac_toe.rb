@@ -55,6 +55,17 @@ class Board
     nil
   end
 
+  def find_at_risk_square(marker)
+    WINNING_LINES.each do |line|
+      squares = @squares.values_at(*line)
+      marked_squares = squares.select { |value| value.marker == marker }
+      if marked_squares.count == 2
+        return @squares.select { |k, v| line.include?(k) && v.marker == Square::INITIAL_MARKER }.keys.first
+      end
+    end
+    nil
+  end
+
   private
 
   def three_identical_markers?(squares)
@@ -133,6 +144,8 @@ class Computer < Player
 end
 
 class TTTGame
+  WINNING_SCORE = 2
+
   attr_reader :board, :human, :computer
 
   def initialize
@@ -144,18 +157,8 @@ class TTTGame
 
   def play
     game_setup
-
     loop do
-      display_board_and_clear_screen
-
-      loop do
-        current_player_moves
-        break if board.someone_won? || board.full?
-        display_board_and_clear_screen
-      end
-
-      update_score
-
+      main_game
       if overall_winner?
         display_board_and_clear_screen
         display_overall_winner
@@ -163,7 +166,6 @@ class TTTGame
       else
         display_result
       end
-
       break unless play_again?
       reset
     end
@@ -187,16 +189,27 @@ class TTTGame
     choose_first_move
   end
 
+  def main_game
+    display_board_and_clear_screen
+    loop do
+      current_player_moves
+      break if board.someone_won? || board.full?
+      display_board_and_clear_screen
+    end
+    update_score
+  end
+
   def overall_winner?
-    [human.score, computer.score].include?(5)
+    [human.score, computer.score].include?(WINNING_SCORE)
   end
 
   def display_overall_winner
+    puts ""
     case board.winning_marker
     when human.marker
-      puts "#{human.name} has 5 points and wins the game!"
+      puts "***#{human.name} has #{WINNING_SCORE} points and wins the game!***"
     when computer.marker
-      puts "#{computer.name} has 5 points and wins the game!"
+      puts "***#{computer.name} has #{WINNING_SCORE} points and wins the game!***"
     end
   end
 
@@ -283,7 +296,10 @@ class TTTGame
   end
 
   def computer_moves
-    square = board.unmarked_keys.sample
+    square = board.find_at_risk_square(human.marker)
+    square = board.find_at_risk_square(computer.marker) unless square
+    square = 5 if !square && board.unmarked_keys.include?(5)
+    square = board.unmarked_keys.sample unless square
     board[square] = computer.marker
   end
 
