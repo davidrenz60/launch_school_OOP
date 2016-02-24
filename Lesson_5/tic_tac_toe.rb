@@ -13,7 +13,7 @@ class Board
   end
 
   def draw
-    puts <<-MSG
+    puts <<~MSG
 
           |     |
        #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}
@@ -144,7 +144,7 @@ class Computer < Player
 end
 
 class TTTGame
-  WINNING_SCORE = 2
+  WINNING_SCORE = 5
 
   attr_reader :board, :human, :computer
 
@@ -321,11 +321,9 @@ class TTTGame
     loop do
       puts "Would you like to play again? (y/n)"
       answer = gets.chomp.downcase
-      break if %w(y n).include?(answer)
+      break answer == 'y' if %w(y n).include?(answer)
       puts "Please enter y or n"
     end
-
-    answer == 'y'
   end
 
   def reset
