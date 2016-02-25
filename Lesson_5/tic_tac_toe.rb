@@ -60,7 +60,7 @@ class Board
       squares = @squares.values_at(*line)
       marked_squares = squares.select { |value| value.marker == marker }
       if marked_squares.count == 2
-        return @squares.select { |k, v| line.include?(k) && v.marker == Square::INITIAL_MARKER }.keys.first
+        return @squares.select { |key, value| line.include?(key) && value.marker == Square::INITIAL_MARKER }.keys.first
       end
     end
     nil
@@ -77,6 +77,7 @@ end
 
 class Square
   INITIAL_MARKER = ' '
+  
   attr_accessor :marker
 
   def initialize(marker=INITIAL_MARKER)
@@ -98,6 +99,7 @@ end
 
 class Player
   VALID_MARKERS = ['X', 'O']
+  
   attr_reader :marker, :name
   attr_accessor :score
 
@@ -124,9 +126,9 @@ class Player
     loop do
       choice = gets.chomp.upcase
       break if VALID_MARKERS.include?(choice)
-
       puts "Please enter a valid marker."
     end
+    
     @marker = choice
   end
 end
@@ -157,8 +159,10 @@ class TTTGame
 
   def play
     game_setup
+    
     loop do
       main_game
+      
       if overall_winner?
         display_board_and_clear_screen
         display_overall_winner
@@ -166,6 +170,7 @@ class TTTGame
       else
         display_result
       end
+      
       break unless play_again?
       reset
     end
@@ -244,6 +249,7 @@ class TTTGame
       break if [1, 2].include?(answer)
       puts "Please enter a vaild choice."
     end
+    
     @current_marker = answer == 1 ? human.marker : computer.marker
   end
 
@@ -292,6 +298,7 @@ class TTTGame
       break if board.unmarked_keys.include?(square)
       puts "Sorry, invalid choice"
     end
+    
     board[square] = human.marker
   end
 
